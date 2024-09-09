@@ -1,37 +1,49 @@
 package com.application.Application.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import com.application.Application.common.enums.Role;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
+@Table(name = "users")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Users {
 
     @Id
-    private int id;
-    private String userName;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String username;
+
+    @Column(nullable = false)
     private String password;
 
-    // Getters and setters
-    public int getId() {
-        return id;
-    }
+    @Column(nullable = false)
+    private String email;
 
-    public void setId(int id) {
-        this.id = id;
-    }
+    @Column(nullable = false)
+    private String phoneNumber;
 
-    public String getUserName() {
-        return userName;
-    }
+    private boolean isEmailVerified = false;
+    private boolean isPhoneNumberVerified = false;
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
+    private String emailOtp;
+    private String phoneOtp;
 
-    public String getPassword() {
-        return password;
-    }
+    private Set<Role> roles = new HashSet<>();
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    @Column(nullable = false)
+    private String country;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

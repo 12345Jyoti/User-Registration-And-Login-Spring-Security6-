@@ -1,6 +1,6 @@
 package com.application.Application.config;
-import com.application.Application.service.JWTService;
-import com.application.Application.service.MyUserDetailsService;
+import com.application.Application.jwtAuth.JWTService;
+import com.application.Application.jwtAuth.MyUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,6 +30,11 @@ public class JwtFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         String token = null;
         String username = null;
+        String requestURI = request.getRequestURI();
+        if (requestURI.equals("/verify-email") || requestURI.equals("/verify-phone")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
@@ -48,4 +53,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+
+
+
+
+
 }

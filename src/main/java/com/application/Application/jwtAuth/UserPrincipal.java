@@ -1,5 +1,6 @@
-package com.application.Application.entity;
+package com.application.Application.jwtAuth;
 
+import com.application.Application.entity.Users;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,7 +11,7 @@ import java.util.Collections;
 
 public class UserPrincipal implements UserDetails {
 
-    private Users user;  // Correct Users entity
+    private Users user;
 
     public UserPrincipal(Users user) {
         this.user = user;
@@ -28,7 +29,7 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getUserName();
+        return user.getUsername();
     }
 
     @Override

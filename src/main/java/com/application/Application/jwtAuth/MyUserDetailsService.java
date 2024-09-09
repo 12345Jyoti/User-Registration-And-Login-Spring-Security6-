@@ -1,8 +1,7 @@
-package com.application.Application.service;
+package com.application.Application.jwtAuth;
 
-import com.application.Application.entity.UserPrincipal;
 import com.application.Application.entity.Users;
-import com.application.Application.repo.UserRepo;
+import com.application.Application.repo.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -13,11 +12,11 @@ import org.springframework.stereotype.Service;
 public class MyUserDetailsService implements UserDetailsService {
 
     @Autowired
-    private UserRepo userRepo;
+    private UserRepository userRepo;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Users user = userRepo.findByUserName(username);
+        Users user = userRepo.findByUsername(username);
 
         if (user == null) {
             System.out.println("User not found");
