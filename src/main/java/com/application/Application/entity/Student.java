@@ -1,4 +1,4 @@
-package com.application.Application;
+package com.application.Application.entity;
 
 public class Student {
     private int id;

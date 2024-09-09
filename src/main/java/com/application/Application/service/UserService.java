@@ -2,7 +2,6 @@ package com.application.Application.service;
 
 import com.application.Application.entity.Users;
 import com.application.Application.repo.UserRepo;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
