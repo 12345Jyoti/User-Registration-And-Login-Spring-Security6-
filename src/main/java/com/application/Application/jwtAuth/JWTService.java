@@ -1,6 +1,8 @@
 package com.application.Application.jwtAuth;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -47,6 +49,7 @@ public class JWTService {
 
     }
 
+
     private SecretKey getKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretkey);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -71,9 +74,21 @@ public class JWTService {
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
-        final String userName = extractUserName(token);
-        return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        try{
+            final String userName = extractUserName(token);
+            return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        }catch (ExpiredJwtException e) {
+            // Handle token expiration
+            System.out.println("Token is expired: " + e.getMessage());
+            throw new RuntimeException("Token expired");
+        } catch (JwtException e) {
+            // Handle invalid token
+            System.out.println("Invalid token: " + e.getMessage());
+            throw new RuntimeException("Invalid token");
+        }
+
     }
+
 
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());

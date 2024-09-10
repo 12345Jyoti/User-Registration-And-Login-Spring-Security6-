@@ -1,6 +1,5 @@
 package com.application.Application.entity;
 
-import com.application.Application.common.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -39,7 +38,12 @@ public class Users {
     private String emailOtp;
     private String phoneOtp;
 
-    private Set<Role> roles = new HashSet<>();
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "user_roles", // Name of the join table
+            joinColumns = @JoinColumn(name = "user_id"), // Foreign key for Users
+            inverseJoinColumns = @JoinColumn(name = "role_id") // Foreign key for Roles
+    )
+    private Set<Role> roles = new HashSet<>(); // Set of Role entities associated with the user
 
     @Column(nullable = false)
     private String country;

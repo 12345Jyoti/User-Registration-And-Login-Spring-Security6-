@@ -61,8 +61,10 @@ public class UserController {
         return ResponseEntity.ok("Login successful. JWT Token: " + jwtToken);
     }
 
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
+//    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
+//@PreAuthorize("hasRole('ROLE_USER')")
     @GetMapping("/all-users")
+    @PreAuthorize("hasRole('ROLE_ADMIN')") // Restrict access to only users with ROLE_ADMIN
     public ResponseEntity<List<UsersDTO>> getAllUsers() {
         List<UsersDTO> users = userService.getAllUsers();
         return ResponseEntity.ok(users);

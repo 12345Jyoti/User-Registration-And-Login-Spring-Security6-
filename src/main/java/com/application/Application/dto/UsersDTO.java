@@ -1,11 +1,7 @@
 package com.application.Application.dto;
 
-import com.application.Application.common.enums.Role;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import com.application.Application.common.enums.Roles;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,6 +20,9 @@ public class UsersDTO {
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
     private String username;
 
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password must be at least 8 characters long")
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$", message = "Password must contain at least one digit, one uppercase letter, one special character, and no spaces")
     private String password;
 
     @NotBlank(message = "Email is required")
@@ -31,7 +30,9 @@ public class UsersDTO {
     private String email;
 
     @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number format")
+
+    @NotBlank(message = "Phone number is required")
+    @Pattern(regexp = "^[0-9 ]{10}$", message = "Invalid phone number format")
     private String phoneNumber;
 
     @NotNull(message = "Email verification status is required")
@@ -40,17 +41,14 @@ public class UsersDTO {
     @NotNull(message = "Phone number verification status is required")
     private boolean isPhoneNumberVerified;
 
-    private Set<Role> roles;
+    private Set<Roles> roles;
 
     @NotBlank(message = "Country is required")
     private String country;
 
-
     private String emailOtp;
     private String phoneOtp;
 
-
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
 }

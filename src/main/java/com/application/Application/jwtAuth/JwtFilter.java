@@ -1,6 +1,4 @@
-package com.application.Application.config;
-import com.application.Application.jwtAuth.JWTService;
-import com.application.Application.jwtAuth.MyUserDetailsService;
+package com.application.Application.jwtAuth;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

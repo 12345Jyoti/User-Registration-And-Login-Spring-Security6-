@@ -1,26 +1,26 @@
 package com.application.Application.service.user;
 
+import com.application.Application.common.enums.Roles;
 import com.application.Application.dto.UsersDTO;
-import com.application.Application.common.enums.Role;
+import com.application.Application.entity.Role;
 import com.application.Application.entity.Users;
+import com.application.Application.jwtAuth.JWTService;
 import com.application.Application.mapper.UsersMapper;
 import com.application.Application.otpServices.EmailService;
 import com.application.Application.otpServices.SmsService;
+import com.application.Application.repo.RoleRepository;
 import com.application.Application.repo.UserRepository;
-import com.application.Application.jwtAuth.JWTService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.Authentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -29,6 +29,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Autowired
     private EmailService emailService;
@@ -62,7 +65,8 @@ public class UserServiceImpl implements UserService {
             String emailOtp = generateOtp();
             String phoneOtp = generateOtp();
 
-            Users user = UsersMapper.toEntity(usersDTO);
+            Users user = UsersMapper.dtoToEntity(usersDTO);
+
             user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
             user.setEmailOtp(emailOtp);
             user.setPhoneOtp(phoneOtp);
@@ -70,21 +74,27 @@ public class UserServiceImpl implements UserService {
             user.setPhoneNumberVerified(false);
             user.setCreatedAt(LocalDateTime.now());
 
-            // Assign default role
-            user.getRoles().add(Role.ROLE_USER); // Add ROLE_USER by default
-
-            // If you want to add admin role conditionally, uncomment the line below
-            // user.getRoles().add(Role.ROLE_ADMIN);
+            Set<Role> roles = new HashSet<>();
+            for (Roles roleEnum : usersDTO.getRoles()) {
+                Role role = roleRepository.findByRoleName(roleEnum);
+                if (role == null) {
+                    role = new Role();
+                    role.setRoleName(roleEnum);
+                    role = roleRepository.save(role);
+                }
+                roles.add(role);
+            }
+            user.setRoles(roles);
 
             Users savedUser = userRepository.save(user);
 
             emailService.sendOtp(user.getEmail(), emailOtp);
             smsService.sendOtp(user.getPhoneNumber(), phoneOtp);
 
-            return UsersMapper.toDto(savedUser);
+            return UsersMapper.entityToDto(savedUser);
         } catch (Exception e) {
             logger.error("Error occurred while registering user: {}", e.getMessage());
-            throw new Exception("User registration failed");
+            throw e;
         }
     }
 
@@ -204,8 +214,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public String verify(Users user) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
 
             if (authentication.isAuthenticated()) {
                 return jwtService.generateToken(user.getUsername());
@@ -219,10 +228,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UsersDTO> getAllUsers() {
         try {
-            List<Users> usersList = userRepository.findAll(); // Fetch all users from the repository
-            return usersList.stream() // Convert List<Users> to List<UsersDTO>
-                    .map(UsersMapper::toDto)
-                    .toList();
+            List<Users> usersList = userRepository.findAll();
+            return usersList.stream().map(UsersMapper::entityToDto).toList();
         } catch (Exception e) {
             logger.error("Error occurred while fetching users: {}", e.getMessage());
             throw new RuntimeException("Failed to fetch users");
