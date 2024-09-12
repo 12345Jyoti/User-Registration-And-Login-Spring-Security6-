@@ -82,7 +82,7 @@ public class UserServiceImpl implements UserService {
                 if (role == null) {
                     role = new Role();
                     role.setRoleName(roleEnum);
-                    role = roleRepository.save(role); // Save new role if it doesn't exist
+                    role = roleRepository.save(role);
                 }
                 roles.add(role);
             }

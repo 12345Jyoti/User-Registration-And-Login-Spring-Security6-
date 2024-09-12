@@ -59,7 +59,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorHandlerFields> handleAccessDeniedException(
             AccessDeniedException exception,
             HttpServletRequest request) {
-        HttpStatus status = HttpStatus.FORBIDDEN; // Assuming 403 status code for access denied
+        HttpStatus status = HttpStatus.FORBIDDEN;
         String errorCode = ErrorMessages.ACCESS_DENIED_EXCEPTION;
         String message = "User is not Authorized: " + exception.getMessage();
         String path = request.getRequestURI();
