@@ -1,32 +1,32 @@
-version: "3.8"
-
-services:
-  mysql:
-    image: mysql:8
-    container_name: mysql_db_docker
-    ports:
-      - "3307:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: Satyam@123
-      MYSQL_DATABASE: Application
-      MYSQL_USER: Satyam
-      MYSQL_PASSWORD: Satyam@123
-    volumes:
-      - mysql_data:/var/lib/mysql
-
-  springboot:
-    build: .
-    container_name: application
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/Application
-      SPRING_DATASOURCE_USERNAME: Satyam
-      SPRING_DATASOURCE_PASSWORD: Satyam@123
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-    ports:
-      - "8082:8081"
-    depends_on:
-      - mysql
-
-volumes:
-  mysql_data:
-
+#version: "3.8"
+#
+#services:
+#  mysql:
+#    image: mysql:8
+#    container_name: mysql_db_docker
+#    ports:
+#      - "3306:3306"
+#    environment:
+#      MYSQL_ROOT_PASSWORD: Satyam@123
+#      MYSQL_DATABASE: Application
+#      MYSQL_USER: Satyam
+#      MYSQL_PASSWORD: Satyam@123
+#    volumes:
+#      - mysql_data:/var/lib/mysql
+#
+#  springboot:
+#    build: .
+#    container_name: application
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/Application
+#      SPRING_DATASOURCE_USERNAME: Satyam
+#      SPRING_DATASOURCE_PASSWORD: Satyam@123
+#      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+#    ports:
+#      - "8081:8081"  # Updated to map 8081 inside the container to 8082 on the host
+#    depends_on:
+#      - mysql
+#
+#volumes:
+#  mysql_data:
+#
