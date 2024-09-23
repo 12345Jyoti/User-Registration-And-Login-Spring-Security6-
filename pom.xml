@@ -10,11 +10,11 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
-	<groupId>com.application</groupId>
-	<artifactId>Application</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>Application</name>
-	<description>Demo project for Spring Boot</description>
+	<groupId>com.dataandgrow.services</groupId>
+	<artifactId>AuthImpl</artifactId>
+	<version>0.0.1</version>
+	<name>Auth</name>
+	<description>Auth implementation for users</description>
 
 	<properties>
 		<java.version>21</java.version>
@@ -106,6 +106,8 @@
 			<artifactId>twilio</artifactId>
 			<version>8.19.0</version> <!-- Check for the latest version -->
 		</dependency>
+
+
 
 	</dependencies>
 
