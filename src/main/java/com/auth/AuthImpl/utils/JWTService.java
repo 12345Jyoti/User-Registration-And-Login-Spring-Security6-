@@ -67,6 +67,26 @@ public class JWTService {
         }
     }
 
+    public boolean validateToken(String token) {
+        try {
+            // Perform validation logic (signature, expiration, etc.)
+            return !isTokenExpired(token);  // Assuming token expiration check
+        } catch (JwtException e) {
+            System.out.println("Invalid JWT token: " + e.getMessage());
+            return false;  // Token is invalid
+        }
+    }
+
+    // Extracts username from token
+//    public String extractUserName(String token) {
+//        // Extract user info (e.g., username) from token claims
+//        return Jwts.parser()
+//                .setSigningKey(secretKey)  // Your secret key for signature validation
+//                .parseClaimsJws(token)
+//                .getBody()
+//                .getSubject();  // Assuming the subject is the username
+//    }
+
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }

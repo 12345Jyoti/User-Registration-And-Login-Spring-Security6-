@@ -1,5 +1,7 @@
 package com.auth.AuthImpl.registraion.userServices;
 
+import com.auth.AuthImpl.ctp.entity.Player;
+import com.auth.AuthImpl.ctp.repository.PlayerRepository;
 import com.auth.AuthImpl.registraion.enums.Roles;
 import com.auth.AuthImpl.registraion.dto.UsersRequestDTO;
 import com.auth.AuthImpl.registraion.dto.UsersResponseDTO;
@@ -42,6 +44,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private JWTService jwtService;
+
+    @Autowired
+    private PlayerRepository playerRepository;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -92,6 +97,15 @@ public class UserServiceImpl implements UserService {
 
             emailService.sendOtp(user.getEmail(), emailOtp);
             smsService.sendOtp(user.getPhoneNumber(), phoneOtp);
+
+
+            Player player = new Player();
+            player.setUser(savedUser); // Set the user reference
+            player.setChips(1000L); // Default chips
+            player.setPlayerName(savedUser.getUsername()); // Store username as playerName
+            player.setPlayerRank("Beginner"); // Assign default rank
+
+            playerRepository.save(player);
 
             return UsersMapper.entityToResponseDto(savedUser);
         } catch (Exception e) {

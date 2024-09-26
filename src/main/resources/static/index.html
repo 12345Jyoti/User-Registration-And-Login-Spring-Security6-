@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teen Patti Game Login</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        #gameArea {
+            margin-top: 20px;
+            display: none; /* Hide game area initially */
+        }
+        #messages {
+            border: 1px solid #ccc;
+            height: 200px;
+            overflow-y: scroll;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: white;
+        }
+        .input-field {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Teen Patti Game Login</h1>
+
+<div class="input-field">
+    <label for="username">Username:</label>
+    <input type="text" id="username" placeholder="Enter your Username" required />
+</div>
+
+<div class="input-field">
+    <label for="password">Password:</label>
+    <input type="password" id="password" placeholder="Enter your Password" required />
+</div>
+
+<button id="loginButton">Login</button>
+
+<div id="gameArea">
+    <h2>Game Area</h2>
+    <div class="input-field">
+        <label for="playerId">Player ID:</label>
+        <input type="number" id="playerId" placeholder="Enter your Player ID" required />
+    </div>
+
+    <div class="input-field">
+        <label for="gameId">Game ID:</label>
+        <input type="number" id="gameId" placeholder="Enter Game ID" required />
+    </div>
+
+    <div class="input-field">
+        <label for="action">Action:</label>
+        <select id="action">
+            <option value="JOIN">Join</option>
+            <option value="BET">Bet</option>
+            <option value="DEAL">Deal</option>
+            <option value="FOLD">Fold</option>
+            <option value="SHOW">Show</option>
+        </select>
+    </div>
+
+    <div class="input-field" id="betField" style="display: none;">
+        <label for="betAmount">Bet Amount:</label>
+        <input type="number" id="betAmount" placeholder="Enter Bet Amount" />
+    </div>
+
+    <button id="sendButton">Send Action</button>
+
+    <div id="messages"></div>
+</div>
+
+<script>
+    var stompClient = null;
+    var jwtToken = null;
+
+    document.getElementById('loginButton').addEventListener('click', function () {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        // Login using username and password
+        fetch('api/users-register/login-with-username-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: username, password: password })
+        })
+        .then(response => {
+        console.log(response);
+
+            return response.json();
+        })
+        .then(data => {
+        console.log(data);
+
+            if (data.body) {
+                    console.log("Inside data.data check :");
+
+
+        jwtToken = data.body.replace(/"/g, ''); // Remove any quotes if present
+<!--                jwtToken = data.body; // Store JWT token-->
+                alert('Login successful!');
+                document.getElementById('gameArea').style.display = 'block'; // Show game area
+                connect(); // Connect to WebSocket
+            } else {
+                console.log("inside else");
+            }
+        })
+        .catch(error => {
+            console.error(error);
+            alert('Error: ' + error.message);
+        });
+    });
+
+
+
+function connect() {
+    console.log('Attempting to connect...');
+
+    // Ensure jwtToken is defined and has a valid value
+    console.log('JWT Token: ', jwtToken);
+
+    const socket = new SockJS('http://localhost:8081/ws-game');
+
+    stompClient = Stomp.over(socket);
+
+    // Setting the Authorization header
+    stompClient.connect(
+        { 'Authorization': 'Bearer ' + jwtToken },
+        function(frame) {
+            console.log('Connected: ' + frame);
+            // Subscribe to a topic
+            stompClient.subscribe('/topic/gameUpdates', function(event) {
+                showMessage(JSON.parse(event.body));
+            });
+        },
+        function(error) {
+            console.error('Connection error: ' + error);
+            alert('Connection failed: ' + error);
+        }
+    );
+}
+
+
+
+    function sendAction() {
+        const playerId = document.getElementById('playerId').value;
+        const gameId = document.getElementById('gameId').value;
+        const action = document.getElementById('action').value;
+        const betAmount = action === "BET" ? document.getElementById('betAmount').value : 0;
+
+        const playerAction = {
+            playerId: parseInt(playerId),
+            gameId: parseInt(gameId),
+            action: action,
+            betAmount: parseInt(betAmount)
+        };
+
+        stompClient.send("/app/gameAction", {}, JSON.stringify(playerAction));
+    }
+
+    function showMessage(message) {
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML += `<div>${JSON.stringify(message)}</div>`;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
+    }
+
+    document.getElementById('sendButton').addEventListener('click', function () {
+        if (!stompClient) {
+            connect();
+        }
+        sendAction();
+    });
+
+    document.getElementById('action').addEventListener('change', function () {
+        document.getElementById('betField').style.display = this.value === "BET" ? 'block' : 'none';
+    });
+</script>
+</body>
+</html>
