@@ -45,8 +45,8 @@ public class PlayerGame {
     private boolean hasFolded = false;
 
     // Track whether the player has checked (i.e., not raised the bet)
-    @Column(name = "has_checked", nullable = false)
-    private boolean hasChecked = false;
+    @Column(name = "is_currentPlayer", nullable = false)
+    private boolean isCurrentPlayer ;
 
     // Track whether the player is playing blind (without seeing cards)
     @Column(name = "is_blind", nullable = false)
@@ -56,13 +56,14 @@ public class PlayerGame {
     public PlayerGame() {}
 
     // Parametrized constructor for easier initialization
-    public PlayerGame(Long userId, Long gameId, Users user, Game game, Long betAmount, GameResult result, boolean isBlind) {
+    public PlayerGame(Long userId, Long gameId, Users user, Game game, Long betAmount, GameResult result,boolean isCurrentPlayer, boolean isBlind) {
         this.userId = userId;
         this.gameId = gameId;
         this.user = user;
         this.game = game;
         this.betAmount = betAmount;
         this.result = result;
+        this.isCurrentPlayer=isCurrentPlayer;
         this.isBlind = isBlind;
     }
 
@@ -132,11 +133,11 @@ public class PlayerGame {
     }
 
     public boolean getHasChecked() {
-        return hasChecked;
+        return isCurrentPlayer;
     }
 
-    public void setHasChecked(boolean hasChecked) {
-        this.hasChecked = hasChecked;
+    public void setHasChecked(boolean isCurrentPlayer) {
+        this.isCurrentPlayer = isCurrentPlayer;
     }
 
     public boolean getIsBlind() {

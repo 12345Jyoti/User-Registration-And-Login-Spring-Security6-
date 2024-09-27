@@ -1,5 +1,6 @@
 package com.auth.AuthImpl.ctp.service;
 
+import com.auth.AuthImpl.ctp.dto.GameEvent;
 import com.auth.AuthImpl.ctp.entity.Game;
 import com.auth.AuthImpl.ctp.entity.Player;
 import com.auth.AuthImpl.ctp.entity.PlayerGame;
@@ -12,6 +13,7 @@ import com.auth.AuthImpl.ctp.repository.PlayerRepository;
 import com.auth.AuthImpl.registraion.entity.Users;
 import com.auth.AuthImpl.registraion.repo.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -23,6 +25,7 @@ public class TeenPattiGameService {
     private final List<String> deck = new ArrayList<>(); // Deck of cards
     private int currentPot = 0;
     private int currentBet = 0;
+    private static final int ANTE_AMOUNT = 100; // The fixed ante amount, can be adjusted
 
     @Autowired
     private PlayerRepository playerRepository;
@@ -35,6 +38,8 @@ public class TeenPattiGameService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
     public TeenPattiGameService() {
         initializeDeck();
     }
@@ -90,8 +95,48 @@ public class TeenPattiGameService {
     private void startGame(Game game) {
         game.setStatus(GameStatus.ACTIVE);
         gameRepository.save(game);
+        broadcastEvent("gameStarted", "The game has started! Good luck to all players!");
+        postAnte(game.getGameId());
         dealCards(game.getGameId());
     }
+
+
+    public void postAnte(Long gameId) {
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new IllegalArgumentException("Game not found"));
+
+        // Retrieve all players associated with this game
+        List<PlayerGame> playersInGame = playerGameRepository.findByGameId(gameId);
+
+        for (PlayerGame playerGame : playersInGame) {
+            Long userId = playerGame.getUserId();
+
+            // Fetch the player's entity
+            Player player = playerRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+
+            // Check if the player has enough chips for the ante
+            if (player.getChips() < ANTE_AMOUNT) {
+                throw new IllegalStateException("Player " + player.getUser() + " does not have enough chips for the ante.");
+            }
+
+            // Deduct the ante from the player's chips
+            player.setChips(player.getChips() - ANTE_AMOUNT);
+            playerRepository.save(player); // Save the updated player state
+
+            // Add the ante amount to the player's bet amount
+            playerGame.setBetAmount(playerGame.getBetAmount() + ANTE_AMOUNT);
+            playerGameRepository.save(playerGame); // Save updated player-game state
+
+            // Add the ante to the game's current pot
+            currentPot += ANTE_AMOUNT;
+        }
+
+        System.out.println("Ante of " + ANTE_AMOUNT + " has been posted by all players.");
+        game.setTotalPot((long) currentPot); // Update the total pot in the game
+        gameRepository.save(game); // Save updated game state
+    }
+
 
     public void dealCards(Long gameId) {
         Game game = gameRepository.findById(gameId)
@@ -292,6 +337,22 @@ public class TeenPattiGameService {
         PlayerGame playerGame = playerGameRepository.findByUserIdAndGameId(playerId, gameId)
                 .orElseThrow(() -> new IllegalArgumentException("Player is not part of the game"));
 
+
+        // Retrieve the player to access the chip count
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+
+        // Ensure the player has enough chips to place the bet
+        if (player.getChips() < amount) {
+            throw new IllegalArgumentException("Insufficient chips to place the bet");
+        }
+
+        // Subtract the bet amount from the player's available chips
+        player.setChips(player.getChips() - amount);
+        playerRepository.save(player); // Save the updated player chip count
+
+        
+
         currentBet = Math.max(currentBet, amount);
         currentPot += amount;
 
@@ -393,4 +454,10 @@ public class TeenPattiGameService {
         initializeDeck();
     }
 
+    private void broadcastEvent(String eventType, Object data) {
+        GameEvent event = new GameEvent();
+        event.setEventType(eventType);
+        event.setEventData(data);
+        messagingTemplate.convertAndSend("/topic/gameUpdates", event);
+    }
 }

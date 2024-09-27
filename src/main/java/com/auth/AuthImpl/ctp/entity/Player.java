@@ -1,6 +1,5 @@
 package com.auth.AuthImpl.ctp.entity;
 
-
 import com.auth.AuthImpl.registraion.entity.Users;
 import jakarta.persistence.*;
 
@@ -9,30 +8,40 @@ import jakarta.persistence.*;
 public class Player {
 
     @Id
-    private Long payerId;
+//    @GeneratedValue(strategy = GenerationType.IDENTITY) // Automatically generate playerId
+    private Long playerId;
 
     @OneToOne
-    @MapsId // This indicates that the primary key of Player is the same as userId
+    @MapsId // Indicates that the primary key of Player is the same as userId
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false) // Reference to the userId from Users
     private Users user;
 
-
     @Column(nullable = false)
-    private Long chips = 1000L;
+    private Long chips = 1000L; // Default chips for a new player
 
     @Column(nullable = false)
     private String playerName;
 
     private String playerRank;
 
-    // Constructors, Getters, and Setters
+    // Default constructor
     public Player() {}
 
-    public Player(Users user, Long chips, String playerName, String playerRank) {
+    // Constructor with parameters
+    public Player(Users user, Long chips, String playerRank) {
         this.user = user;
-        this.chips = chips;
-        this.playerName = user.getUsername();
+        this.chips = chips != null ? chips : 1000L; // Default to 1000 if chips are not provided
+        this.playerName = user.getUsername(); // Set playerName from user
         this.playerRank = playerRank;
+    }
+
+    // Getters and Setters
+    public Long getPlayerId() {
+        return playerId;
+    }
+
+    public void setPlayerId(Long playerId) {
+        this.playerId = playerId;
     }
 
     public Users getUser() {
@@ -41,7 +50,9 @@ public class Player {
 
     public void setUser(Users user) {
         this.user = user;
-        this.playerName = user.getUsername(); // Update playerName whenever user is set
+        if (user != null) {
+            this.playerName = user.getUsername(); // Update playerName whenever user is set
+        }
     }
 
     public Long getChips() {
@@ -68,4 +79,3 @@ public class Player {
         this.playerRank = playerRank;
     }
 }
-

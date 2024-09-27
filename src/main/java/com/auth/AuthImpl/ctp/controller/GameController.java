@@ -1,5 +1,8 @@
 package com.auth.AuthImpl.ctp.controller;
 
+import com.auth.AuthImpl.ctp.actionImpl.JoinGameAction;
+import com.auth.AuthImpl.ctp.actionImpl.PlaceBetAction;
+import com.auth.AuthImpl.ctp.actionImpl.ShowCardsAction;
 import com.auth.AuthImpl.ctp.dto.GameEvent;
 import com.auth.AuthImpl.ctp.dto.PlayerAction;
 import com.auth.AuthImpl.ctp.enums.PlayerActionType;
@@ -18,6 +21,16 @@ public class GameController {
     private TeenPattiGameService gameService;
 
     @Autowired
+    private JoinGameAction joinGameAction;
+    @Autowired
+    private ShowCardsAction showCardsAction;
+
+    @Autowired
+    private PlaceBetAction placeBetAction;
+
+
+
+    @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/gameAction")
@@ -33,8 +46,8 @@ public class GameController {
                 break;
 
             case BET:
-//                boolean isBlind = playerAction.isBlind(); // This method or flag should be present in the `playerAction` class
-                handleBet(playerId, gameId, playerAction.getBetAmount());
+                boolean isBlind = playerAction.isBlind(); // This method or flag should be present in the `playerAction` class
+                handleBet(playerId, gameId, playerAction.getBetAmount(),isBlind);
                 break;
 
 
@@ -60,7 +73,7 @@ public class GameController {
         Long playerId = playerAction.getPlayerId();
         Long gameId = playerAction.getGameId();
         try {
-            gameService.joinGame(playerId, gameId);
+            joinGameAction.joinGame(playerId, gameId);
             broadcastEvent("playerJoined", playerId + " has joined the game");
             System.out.println("Player " + playerId + " has joined the game with Game ID: " + gameId);
         } catch (IllegalArgumentException e) {
@@ -68,19 +81,29 @@ public class GameController {
         }
     }
 
-    private void handleBet(Long playerId, Long gameId, int betAmount) {
+    private void handleBet(Long playerId, Long gameId, int betAmount, boolean isBlind) {
         try {
-            // Updated to match the `placeBet` method signature
-            gameService.placeBet(playerId, betAmount, gameId);
-            // Broadcasting and logging the bet event
-            broadcastEvent("betPlaced", "Player " + playerId + " has placed a bet of " + betAmount);
-//            System.out.println("Player " + playerId + " placed a bet of " + betAmount + " (Blind: " + isBlind + ")");
+            // Call the placeBet method with the correct parameters
+            placeBetAction.placeBet(playerId, betAmount, gameId, isBlind);
+
+            // Broadcasting the bet event
+//            broadcastEvent("betPlaced", "Player " + playerId + " has placed a bet of " + betAmount + " (Blind: " + isBlind + ")");
+
+            // Logging the bet details to the console
+            System.out.println("Player " + playerId + " placed a bet of " + betAmount + " (Blind: " + isBlind + ")");
         } catch (IllegalArgumentException e) {
-            handleGameError(e.getMessage());
+            // Handle invalid arguments like insufficient chips or invalid bet amount
+            handleGameError("Invalid bet: " + e.getMessage());
         } catch (IllegalStateException e) {
-            handleGameError(e.getMessage());
+            // Handle invalid game states, such as placing a bet when it's not the player's turn
+            handleGameError("Game state error: " + e.getMessage());
+        } catch (Exception e) {
+            // Handle any unexpected errors that might occur
+            handleGameError("Unexpected error: " + e.getMessage());
+            e.printStackTrace();  // Print the stack trace for debugging
         }
     }
+
 
 
 //    private void handleDeal(Long gameId) {
@@ -94,7 +117,7 @@ public class GameController {
     }
 
     private void handleShow(Long gameId) {
-        List<String> winningPlayers = gameService.showCards(gameId);
+        List<String> winningPlayers = showCardsAction.showCards(gameId);
         broadcastEvent("showResults", winningPlayers);
     }
 
