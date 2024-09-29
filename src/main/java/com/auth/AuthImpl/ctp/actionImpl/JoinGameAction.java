@@ -248,7 +248,6 @@ import com.auth.AuthImpl.ctp.enums.GameStatus;
 import com.auth.AuthImpl.ctp.repository.GameRepository;
 import com.auth.AuthImpl.ctp.repository.PlayerGameRepository;
 import com.auth.AuthImpl.ctp.repository.PlayerRepository;
-import com.auth.AuthImpl.ctp.actionImpl.TurnManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;

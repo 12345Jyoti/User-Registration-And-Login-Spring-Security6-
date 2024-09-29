@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "game")
+//todo: table
 public class Game {
 
     @Id

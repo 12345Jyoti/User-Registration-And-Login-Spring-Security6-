@@ -87,7 +87,7 @@ public class GameController {
             placeBetAction.placeBet(playerId, betAmount, gameId, isBlind);
 
             // Broadcasting the bet event
-//            broadcastEvent("betPlaced", "Player " + playerId + " has placed a bet of " + betAmount + " (Blind: " + isBlind + ")");
+            broadcastEvent("betPlaced", "Player " + playerId + " has placed a bet of " + betAmount + " (Blind: " + isBlind + ")");
 
             // Logging the bet details to the console
             System.out.println("Player " + playerId + " placed a bet of " + betAmount + " (Blind: " + isBlind + ")");

@@ -1,5 +1,6 @@
 package com.auth.AuthImpl.ctp.actionImpl;
 
+import com.auth.AuthImpl.ctp.dto.GameEvent;
 import com.auth.AuthImpl.ctp.entity.PlayerGame;
 import com.auth.AuthImpl.ctp.enums.GameResult;
 import com.auth.AuthImpl.ctp.model.Card;
@@ -276,6 +277,7 @@ public class ShowCardsAction {
         }
     }
 
+
     private List<Card> convertStringToHand(List<String> handString) {
         List<Card> hand = new ArrayList<>();
         for (String cardString : handString) {
@@ -288,15 +290,17 @@ public class ShowCardsAction {
     }
 }
 
-
-//package com.auth.AuthImpl.ctp.actionImpl;
 //
+//import com.auth.AuthImpl.ctp.entity.Game;
 //import com.auth.AuthImpl.ctp.entity.PlayerGame;
 //import com.auth.AuthImpl.ctp.enums.GameResult;
+//import com.auth.AuthImpl.ctp.enums.GameStatus;
 //import com.auth.AuthImpl.ctp.model.Card;
+//import com.auth.AuthImpl.ctp.repository.GameRepository;
 //import com.auth.AuthImpl.ctp.repository.PlayerGameRepository;
 //import com.auth.AuthImpl.ctp.service.HandEvaluator;
 //import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.messaging.simp.SimpMessagingTemplate;
 //import org.springframework.stereotype.Service;
 //
 //import java.util.*;
@@ -307,76 +311,62 @@ public class ShowCardsAction {
 //    @Autowired
 //    private PlayerGameRepository playerGameRepository;
 //
+//    @Autowired
+//    private GameRepository gameRepository;
+//
+//    @Autowired
+//    private SimpMessagingTemplate messagingTemplate;
+//
 //    // Map to track side show requests
 //    private Map<Long, List<PlayerGame>> sideShowRequests = new HashMap<>();
 //
 //    public List<String> showCards(Long gameId) {
 //        List<PlayerGame> playersInGame = playerGameRepository.findByGameId(gameId);
 //        List<String> visibleCards = new ArrayList<>();
-//        List<PlayerGame> activePlayers = new ArrayList<>(); // To hold players who haven't folded
-//
-//        for (PlayerGame playerGame : playersInGame) {
-//            if (!playerGame.getHasFolded()) {
-//                visibleCards.add("Player " + playerGame.getUserId() + ": " + playerGame.getCards());
-//                activePlayers.add(playerGame); // Collect active players
-//            }
-//        }
+//        List<PlayerGame> activePlayers = filterActivePlayers(playersInGame, visibleCards);
 //
 //        if (activePlayers.isEmpty()) {
-//            updatePlayerGameResults(playersInGame, Collections.emptyList()); // Handle folds
+//            updatePlayerGameResults(playersInGame, Collections.emptyList());
+//            markGameAsCompleted(gameId);
 //            return visibleCards;
 //        }
 //
-//        // If only two active players, determine the winner directly
+//        // Determine winner if only two active players
 //        if (activePlayers.size() == 2) {
 //            GameResult gameResult = determineWinner(activePlayers);
-//            updatePlayerGameResults(playersInGame, activePlayers); // Update results for all players
+//            updatePlayerGameResults(playersInGame, activePlayers);
+//            markGameAsCompleted(gameId);
+//            broadcastEvent("NATURAL_SHOW", gameId);
 //            return visibleCards;
 //        }
 //
-//        // For more than two active players, handle the side show
-//        handleSideShow(activePlayers);
-//
-//        return visibleCards; // Return visible cards for the player’s view
+//        // Handle side show for more than two active players
+//        handleSideShow(activePlayers, gameId);
+//        return visibleCards;
 //    }
 //
-//    private void handleSideShow(List<PlayerGame> activePlayers) {
-//        // Gather side show requests from active players
+//    private void handleSideShow(List<PlayerGame> activePlayers, Long gameId) {
 //        gatherSideShowRequests(activePlayers);
 //
-//        // If there are not enough participants for a side show
 //        if (sideShowRequests.isEmpty()) {
-//            System.out.println("No side show requests received.");
+//            broadcastEvent("NO_SIDE_SHOW", gameId);
 //            return;
 //        }
 //
-//        // Handle each side show request
 //        for (Map.Entry<Long, List<PlayerGame>> entry : sideShowRequests.entrySet()) {
 //            List<PlayerGame> participants = entry.getValue();
 //            if (participants.size() < 2) {
-//                System.out.println("Not enough players for a side show.");
+//                broadcastEvent("INSUFFICIENT_PLAYERS_FOR_SIDE_SHOW", gameId);
 //                continue;
 //            }
 //
-//            // Show cards only to the side show participants
-//            List<String> sideShowCards = new ArrayList<>();
-//            for (PlayerGame playerGame : participants) {
-//                sideShowCards.add("Player " + playerGame.getUserId() + ": " + playerGame.getCards());
-//            }
-//
-//            // Announce the side show cards
-//            System.out.println("Side show participants:");
-//            for (String cardInfo : sideShowCards) {
-//                System.out.println(cardInfo);
-//            }
-//
-//            // Determine the winner of the side show
+//            broadcastSideShowParticipants(participants);
 //            GameResult sideShowResult = determineWinner(participants);
-//            updatePlayerGameResults(activePlayers, participants); // Update results for all players
+//            updatePlayerGameResults(activePlayers, participants);
+//            broadcastEvent("SIDE_SHOW_RESULT", sideShowResult);
 //        }
 //
-//        // Clear side show requests after processing
-//        sideShowRequests.clear();
+//        sideShowRequests.clear(); // Clear requests after processing
 //    }
 //
 //    private void gatherSideShowRequests(List<PlayerGame> activePlayers) {
@@ -384,13 +374,11 @@ public class ShowCardsAction {
 //            PlayerGame requestingPlayer = activePlayers.get(i);
 //            PlayerGame previousPlayer = activePlayers.get(i - 1);
 //
-//            // Simulate requesting a side show (could replace with actual user interaction)
 //            if (!requestingPlayer.getHasFolded() && new Random().nextBoolean()) {
 //                System.out.println("Player " + requestingPlayer.getUserId() + " has requested a side show with Player " + previousPlayer.getUserId());
 //
 //                // Ask the previous player if they accept the side show request
-//                boolean accepted = askForSideShowAcceptance(previousPlayer);
-//                if (accepted) {
+//                if (askForSideShowAcceptance(previousPlayer)) {
 //                    System.out.println("Player " + previousPlayer.getUserId() + " accepted the side show request.");
 //                    handleSideShowResult(requestingPlayer, previousPlayer);
 //                } else {
@@ -400,105 +388,67 @@ public class ShowCardsAction {
 //        }
 //    }
 //
-//    // Method to simulate asking the previous player if they accept the side show
 //    private boolean askForSideShowAcceptance(PlayerGame previousPlayer) {
-//        // Simulating acceptance logic; replace with actual user input in a real system
-//        return new Random().nextBoolean(); // Randomly accept or deny for simulation purposes
+//        return new Random().nextBoolean(); // Simulate acceptance/denial
 //    }
 //
-//    // Method to handle the result of the side show comparison
 //    private void handleSideShowResult(PlayerGame requestingPlayer, PlayerGame previousPlayer) {
-//        // Compare hands
 //        List<Card> hand1 = convertStringToHand(Arrays.asList(requestingPlayer.getCards().split(",")));
 //        List<Card> hand2 = convertStringToHand(Arrays.asList(previousPlayer.getCards().split(",")));
 //
 //        int comparisonResult = HandEvaluator.compareHands(HandEvaluator.evaluateHand(hand1), HandEvaluator.evaluateHand(hand2));
 //
 //        if (comparisonResult > 0) {
-//            // Requesting player wins, opponent folds
 //            System.out.println("Player " + previousPlayer.getUserId() + " loses side show and folds.");
 //            previousPlayer.setHasFolded(true);
 //        } else {
-//            // Requesting player loses and folds
 //            System.out.println("Player " + requestingPlayer.getUserId() + " loses side show and folds.");
 //            requestingPlayer.setHasFolded(true);
 //        }
 //
-//        // Update the game state
 //        playerGameRepository.save(requestingPlayer);
 //        playerGameRepository.save(previousPlayer);
 //    }
 //
 //    private GameResult determineWinner(List<PlayerGame> activePlayers) {
-//        if (activePlayers.isEmpty()) {
-//            return GameResult.PENDING; // No players left to decide
-//        }
-//
 //        if (activePlayers.size() == 1) {
-//            // If there's only one active player, they automatically win
-//            PlayerGame winner = activePlayers.get(0);
-//            announceWinners(Collections.singletonList(winner)); // Announce the single winner
-//            return GameResult.WON; // There is a clear winner
+//            announceWinners(Collections.singletonList(activePlayers.get(0)));
+//            return GameResult.WON;
 //        }
 //
-//        if (activePlayers.size() == 2) {
-//            PlayerGame player1 = activePlayers.get(0);
-//            PlayerGame player2 = activePlayers.get(1);
-//
-//            List<Card> hand1 = convertStringToHand(Arrays.asList(player1.getCards().split(",")));
-//            List<Card> hand2 = convertStringToHand(Arrays.asList(player2.getCards().split(",")));
-//
-//            String handType1 = HandEvaluator.evaluateHand(hand1);
-//            String handType2 = HandEvaluator.evaluateHand(hand2);
-//
-//            int comparisonResult = HandEvaluator.compareHands(handType1, handType2);
-//
-//            if (comparisonResult > 0) {
-//                player1.setResult(GameResult.WON);
-//                player2.setResult(GameResult.LOST);
-//                announceWinners(Collections.singletonList(player1));
-//                return GameResult.WON; // Player 1 is the winner
-//            } else if (comparisonResult < 0) {
-//                player1.setResult(GameResult.LOST);
-//                player2.setResult(GameResult.WON);
-//                announceWinners(Collections.singletonList(player2));
-//                return GameResult.WON; // Player 2 is the winner
-//            } else {
-//                System.out.println("No clear winner due to a tie between Player "
-//                        + player1.getUserId() + " and Player "
-//                        + player2.getUserId());
-//                return GameResult.PENDING; // No clear winner
-//            }
-//        }
-//
-//        Map<String, String> playerResults = new HashMap<>();
+//        PlayerGame bestPlayer = null;
 //        String bestHand = null;
-//        PlayerGame singleWinner = null;
 //
 //        for (PlayerGame playerGame : activePlayers) {
 //            List<Card> hand = convertStringToHand(Arrays.asList(playerGame.getCards().split(",")));
 //            String handType = HandEvaluator.evaluateHand(hand);
-//            playerResults.put(playerGame.getUserId().toString(), handType);
-//        }
 //
-//        for (PlayerGame playerGame : activePlayers) {
-//            String currentHandType = playerResults.get(playerGame.getUserId().toString());
-//
-//            if (bestHand == null || HandEvaluator.compareHands(currentHandType, bestHand) > 0) {
-//                bestHand = currentHandType;
-//                singleWinner = playerGame;
-//            } else if (HandEvaluator.compareHands(currentHandType, bestHand) == 0) {
-//                singleWinner = null;
+//            if (bestHand == null || HandEvaluator.compareHands(handType, bestHand) > 0) {
+//                bestHand = handType;
+//                bestPlayer = playerGame;
+//            } else if (HandEvaluator.compareHands(handType, bestHand) == 0) {
+//                bestPlayer = null; // Tie
 //            }
 //        }
 //
-//        if (singleWinner != null) {
-//            announceWinners(Collections.singletonList(singleWinner));
+//        if (bestPlayer != null) {
+//            announceWinners(Collections.singletonList(bestPlayer));
 //            return GameResult.WON;
 //        } else {
-//            System.out.println("No clear winner due to a tie.");
+//            broadcastEvent("TIE", activePlayers);
 //            return GameResult.PENDING;
 //        }
+//    }
+//
+//    private List<PlayerGame> filterActivePlayers(List<PlayerGame> playersInGame, List<String> visibleCards) {
+//        List<PlayerGame> activePlayers = new ArrayList<>();
+//        for (PlayerGame playerGame : playersInGame) {
+//            if (!playerGame.getHasFolded()) {
+//                visibleCards.add("Player " + playerGame.getUserId() + ": " + playerGame.getCards());
+//                activePlayers.add(playerGame);
+//            }
+//        }
+//        return activePlayers;
 //    }
 //
 //    private void updatePlayerGameResults(List<PlayerGame> playersInGame, List<PlayerGame> activePlayers) {
@@ -521,27 +471,70 @@ public class ShowCardsAction {
 //            return Collections.emptyList();
 //        }
 //
-//        List<PlayerGame> winners = new ArrayList<>();
+//        PlayerGame bestPlayer = null;
+//        String bestHand = null;
 //
-//        for (PlayerGame player : activePlayers) {
-//            winners.add(player);
+//        for (PlayerGame playerGame : activePlayers) {
+//            List<Card> hand = convertStringToHand(Arrays.asList(playerGame.getCards().split(",")));
+//            String handType = HandEvaluator.evaluateHand(hand);
+//
+//            if (bestHand == null || HandEvaluator.compareHands(handType, bestHand) > 0) {
+//                bestHand = handType;
+//                bestPlayer = playerGame;
+//            }
 //        }
-//        return winners;
+//
+//        return bestPlayer != null ? Collections.singletonList(bestPlayer) : Collections.emptyList();
 //    }
 //
-//    private List<Card> convertStringToHand(List<String> cardStrings) {
-//        List<Card> hand = new ArrayList<>();
-//        for (String cardStr : cardStrings) {
-//            hand.add(new Card(cardStr)); // Assuming the Card constructor takes a string representation
+//    // Mark game as "COMPLETED" and broadcast the event
+//    private void markGameAsCompleted(Long gameId) {
+//        Optional<Game> game = gameRepository.findById(gameId);
+//        if (game.isPresent()) {
+//            Game currentGame = game.get();
+//            currentGame.setStatus(GameStatus.COMPLETED);
+//            gameRepository.save(currentGame);
+//            broadcastEvent("GAME_COMPLETED", gameId);
 //        }
-//        return hand;
 //    }
 //
 //    private void announceWinners(List<PlayerGame> winners) {
-//        System.out.println("Winner(s):");
-//        for (PlayerGame winner : winners) {
-//            System.out.println("Player " + winner.getUserId() + " is the winner.");
+//        if (winners.isEmpty()) {
+//            System.out.println("No winners this round.");
+//        } else {
+//            StringBuilder winnerMessage = new StringBuilder("Winner: ");
+//            for (PlayerGame winner : winners) {
+//                winnerMessage.append("Player ").append(winner.getUserId()).append(", ");
+//            }
+//            winnerMessage.setLength(winnerMessage.length() - 2); // Remove last comma and space
+//            System.out.println(winnerMessage.toString());
 //        }
 //    }
-//}
 //
+//    private void broadcastSideShowParticipants(List<PlayerGame> participants) {
+//        List<String> sideShowCards = new ArrayList<>();
+//        for (PlayerGame playerGame : participants) {
+//            sideShowCards.add("Player " + playerGame.getUserId() + ": " + playerGame.getCards());
+//        }
+//
+//        broadcastEvent("SIDE_SHOW_PARTICIPANTS", sideShowCards);
+//    }
+//
+//    private void broadcastEvent(String eventType, Object data) {
+//        GameEvent event = new GameEvent();
+//        event.setEventType(eventType);
+//        event.setEventData(data);
+//        messagingTemplate.convertAndSend("/topic/gameUpdates", event);
+//    }
+//
+//    private List<Card> convertStringToHand(List<String> handString) {
+//        List<Card> hand = new ArrayList<>();
+//        for (String cardString : handString) {
+//            String[] parts = cardString.split(" of ");
+//            String rank = parts[0].trim();
+//            String suit = parts[1].trim();
+//            hand.add(new Card(suit, rank)); // Card object takes suit and rank
+//        }
+//        return hand;
+//    }
+//}

@@ -332,25 +332,28 @@
         );
     }
 
-    function sendAction() {
-        const playerId = document.getElementById('playerId').value;
-        const gameId = document.getElementById('gameId').value;
-        const action = document.getElementById('action').value;
-        const betAmount = action === "BET" ? document.getElementById('betAmount').value : 0;
-        const isBlind = document.getElementById('isBlind').checked; // For blind play
+   function sendAction() {
+    const playerId = document.getElementById('playerId').value;
+    const gameId = document.getElementById('gameId').value;
+    const action = document.getElementById('action').value;
+    const betAmount = action === "BET" ? document.getElementById('betAmount').value : 0;
+    const isBlind = document.getElementById('isBlind').checked; // For blind play
 
-        const playerAction = {
-            playerId: parseInt(playerId),
-            gameId: parseInt(gameId),
-            action: action,
-            betAmount: parseInt(betAmount),
-            isBlind: isBlind
-        };
+    console.log('isBlind:', isBlind);  // Add this for debugging
 
-        stompClient.send("/app/gameAction", {}, JSON.stringify(playerAction));
+    const playerAction = {
+        playerId: parseInt(playerId),
+        gameId: parseInt(gameId),
+        action: action,
+        betAmount: parseInt(betAmount),
+        isBlind: isBlind
+    };
 
-        console.log("Action sent: ", playerAction); // Logging to console
-    }
+    stompClient.send("/app/gameAction", {}, JSON.stringify(playerAction));
+
+    console.log("Action sent: ", playerAction); // Logging to console
+}
+
 
     function showMessage(message) {
         const messagesDiv = document.getElementById('messages');
@@ -365,11 +368,17 @@
         sendAction();
     });
 
-    document.getElementById('action').addEventListener('change', function () {
-        const isBetAction = this.value === "BET";
-        document.getElementById('betField').style.display = isBetAction ? 'block' : 'none';
-        document.getElementById('blindField').style.display = isBetAction ? 'block' : 'none';
-    });
+   document.getElementById('action').addEventListener('change', function () {
+    const isBetAction = this.value === "BET";
+    document.getElementById('betField').style.display = isBetAction ? 'block' : 'none';
+    document.getElementById('blindField').style.display = isBetAction ? 'block' : 'none';
+
+    // Reset the checkbox when the action changes to something other than BET
+    if (!isBetAction) {
+        document.getElementById('isBlind').checked = false; // Reset the checkbox
+    }
+});
+
 </script>
 </body>
 </html>
