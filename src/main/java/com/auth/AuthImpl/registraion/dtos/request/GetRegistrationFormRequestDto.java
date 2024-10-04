@@ -1,11 +1,13 @@
 package com.auth.AuthImpl.registraion.dtos.request;
 
+import com.auth.AuthImpl.registraion.dtos.Email;
+import com.auth.AuthImpl.registraion.dtos.Mobile;
 import com.auth.AuthImpl.registraion.enums.Medium;
 
 public class GetRegistrationFormRequestDto {
         private Medium medium;  // Sign-up medium (Enum)
-        private MobileRequest mobile;       // Mobile sign-up details
-        private EmailRequest email;         // Email sign-up details
+        private Mobile mobile;       // Mobile sign-up details
+        private Email email;         // Email sign-up details
 
         // Getters and Setters
         public Medium getMedium() {
@@ -16,19 +18,19 @@ public class GetRegistrationFormRequestDto {
             this.medium = medium;
         }
 
-        public MobileRequest getMobile() {
+        public Mobile getMobile() {
             return mobile;
         }
 
-        public void setMobile(MobileRequest mobile) {
+        public void setMobile(Mobile mobile) {
             this.mobile = mobile;
         }
 
-        public EmailRequest getEmail() {
+        public Email getEmail() {
             return email;
         }
 
-        public void setEmail(EmailRequest email) {
+        public void setEmail(Email email) {
             this.email = email;
         }
 

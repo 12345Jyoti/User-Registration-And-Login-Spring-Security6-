@@ -160,6 +160,7 @@ import com.auth.AuthImpl.utils.JWTService;
 import com.auth.AuthImpl.utils.config.TwilioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -185,6 +186,9 @@ public class LoginService {
 
     @Autowired
     private JWTService jwtService;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     /**
      * Generates OTP and sends it via SMS or Email based on the user input.
@@ -216,7 +220,7 @@ public class LoginService {
         } catch (Exception e) {
             // Log the error and handle any exception during OTP generation
             System.err.println("Error during OTP generation: " + e.getMessage());
-            throw new RuntimeException("Failed to generate and send OTP.", e);
+            throw new IllegalArgumentException("Failed to generate and send OTP.", e);
         }
     }
 
@@ -327,7 +331,7 @@ public class LoginService {
             System.out.println("Generated OTP for user: " + user.getUsername() + " is: " + generatedOtp);
         } catch (Exception e) {
             System.err.println("Error during OTP saving: " + e.getMessage());
-            throw new RuntimeException("Failed to save OTP verification details.", e);
+            throw new IllegalArgumentException("Failed to save OTP verification details.", e);
         }
     }
 
@@ -343,5 +347,18 @@ public class LoginService {
             otp.append(random.nextInt(10)); // Generates a random digit between 0-9
         }
         return otp.toString();
+    }
+
+
+
+    public boolean validateUserCredentials(String username, String password) {
+        // Find the user by username
+        Users user = userRepository.findByUsername(username);
+        if (user != null) {
+            // Check if the provided password matches the stored hashed password
+            return passwordEncoder.matches(password, user.getPassword());
+        }
+        // Return false if the user does not exist or the password doesn't match
+        return false;
     }
 }

@@ -154,7 +154,7 @@ public class RegistrationFormService {
     /**
      * Builds the SIGNUP form response.
      * @param activeOptionList List of active registration options (from properties)
-     * @return response with the signup form details
+     * @param response The response object to be populated
      */
     private void buildSignupFormResponse(List<String> activeOptionList, GetRegistrationFormResponseDto response) {
         String primaryActiveOption = activeOptionList.get(0);  // Use first option as primary
@@ -181,24 +181,34 @@ public class RegistrationFormService {
      * @param response The response object to be populated
      */
     private void buildLoginFormResponse(List<String> activeOptionList, GetRegistrationFormResponseDto response) {
-        List<Medium> mediums = activeOptionList.stream()
-                .map(this::mapToMedium)
-                .collect(Collectors.toList());
+        // Check if the list of active options is not empty
+        if (activeOptionList == null || activeOptionList.isEmpty()) {
+            throw new IllegalArgumentException("Active options list cannot be null or empty.");
+        }
 
-        response.setOptions(mediums.stream().map(Medium::name).collect(Collectors.toList()));
+        // Get the first active option (priority option)
+        String primaryActiveOption = activeOptionList.get(0);
 
-        if (mediums.contains(Medium.MOBILE)) {
-            response.setMobile(buildMobileForm());
-        } else if (mediums.contains(Medium.EMAIL)) {
-            response.setEmail(buildEmailForm());
+        // Convert the first active option to the Medium enum
+        Medium primaryMedium = mapToMedium(primaryActiveOption);
+
+        // Set the options in the response (only the first active option is added)
+        response.setOptions(List.of(primaryMedium.name()));
+
+        // Set the form fields based on the primary active medium
+        switch (primaryMedium) {
+            case MOBILE:
+                response.setMobile(buildMobileForm());  // Set mobile form if the first option is MOBILE
+                break;
+            case EMAIL:
+                response.setEmail(buildEmailForm());    // Set email form if the first option is EMAIL
+                break;
+            // You can add more cases for other mediums like Google, Truecaller, etc., if needed
+            default:
+                throw new IllegalArgumentException("Unknown medium: " + primaryMedium);
         }
     }
 
-    /**
-     * Maps option string to Medium enum.
-     * @param option registration/login option as a string
-     * @return mapped Medium enum
-     */
     /**
      * Maps option string to Medium enum.
      * @param option registration/login option as a string
@@ -208,6 +218,7 @@ public class RegistrationFormService {
         switch (option.toLowerCase()) {
             case "email":
                 return Medium.EMAIL;
+
             case "mobile":
                 return Medium.MOBILE;
             // Handle other options like Google, Truecaller here
@@ -241,6 +252,7 @@ public class RegistrationFormService {
         emailForm.setMandatory(true);
         emailForm.setValidationType("true");
         emailForm.setPlaceHolder("Enter your email address");
+        emailForm.setEmailAddress("");
         return emailForm;
     }
 
