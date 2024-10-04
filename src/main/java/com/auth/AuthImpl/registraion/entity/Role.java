@@ -3,34 +3,23 @@ package com.auth.AuthImpl.registraion.entity;
 import com.auth.AuthImpl.registraion.enums.Roles;
 import jakarta.persistence.*;
 
-
 @Entity
 @Table(name = "roles")
-public class Role {
+public class Role extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING) // Store the enum as a string in the database
     @Column(nullable = false, unique = true)
-    private Roles roleName;
+    private Roles roleName; // Change this field to use the enum
 
-    public Role(){}
-    public Role(Long id,Roles roleName){
-        this.id=id;
-        this.roleName=roleName;
+    // Constructors
+    public Role() {
     }
 
-
-    public Long getId() {
-        return id;
+    public Role(Roles roleName) {
+        this.roleName = roleName;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
+    // Getters and Setters
     public Roles getRoleName() {
         return roleName;
     }
@@ -38,5 +27,6 @@ public class Role {
     public void setRoleName(Roles roleName) {
         this.roleName = roleName;
     }
+
 }
 

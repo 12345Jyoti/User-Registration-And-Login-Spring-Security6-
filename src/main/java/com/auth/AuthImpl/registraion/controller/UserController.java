@@ -1,77 +1,108 @@
 package com.auth.AuthImpl.registraion.controller;
-import com.auth.AuthImpl.registraion.dto.UsersRequestDTO;
-import com.auth.AuthImpl.registraion.dto.UsersResponseDTO;
+
+import com.auth.AuthImpl.registraion.dtos.FormTypeRequestDto;
+import com.auth.AuthImpl.registraion.dtos.request.GetRegistrationFormRequestDto;
+import com.auth.AuthImpl.registraion.dtos.request.LoginRequestDto;
+import com.auth.AuthImpl.registraion.dtos.request.LoginRequestDtoWithPass;
+import com.auth.AuthImpl.registraion.dtos.request.OtpVerificationRequestDto;
+import com.auth.AuthImpl.registraion.dtos.response.GetRegistrationFormResponseDto;
+import com.auth.AuthImpl.registraion.dtos.response.OtpVerificationResponseDto;
 import com.auth.AuthImpl.registraion.entity.Users;
-import com.auth.AuthImpl.registraion.userServices.UserService;
-import com.auth.AuthImpl.utils.ApiResponse;
-import org.apache.http.HttpStatus;
+import com.auth.AuthImpl.registraion.enums.FormType;
+import com.auth.AuthImpl.registraion.userServices.LoginService;
+import com.auth.AuthImpl.registraion.userServices.RegistrationFormService;
+import com.auth.AuthImpl.utils.JWTService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+
 
 @RestController
-@RequestMapping("/api/users-register")
+@RequestMapping("/api/auth-user")
 public class UserController {
 
+
     @Autowired
-    private UserService userService;
+    private LoginService loginService;
+
+    @Autowired
+    private RegistrationFormService registrationFormService;
+
+    @Autowired
+    private JWTService jwtService;
+
+    @GetMapping("/form")
+    public ResponseEntity<GetRegistrationFormResponseDto> getRegistrationForm(@RequestBody FormTypeRequestDto formTypeDto) {
+        FormType formType = formTypeDto.getFormType();
+        GetRegistrationFormResponseDto formResponse = registrationFormService.getRegistrationForm(formType);
+
+        return ResponseEntity.ok(formResponse);
+    }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UsersResponseDTO>> registerUser(@RequestBody UsersRequestDTO userDto) throws Exception {
-        UsersResponseDTO registeredUser = userService.registerUser(userDto);
-        return ResponseEntity.ok(ApiResponse.success(registeredUser, "User registered successfully"));
-    }
+    public ResponseEntity<String> registerUser(@RequestBody GetRegistrationFormRequestDto registrationDto) {
+        String email = registrationDto.getEmail().getEmailAddress(); // Assuming you have email in the DTO
+        String isdCode = registrationDto.getMobile().getIsdCode(); // Assuming this is set up in your DTO
+        String phoneNumber = registrationDto.getMobile().getPhoneNumber(); // Assuming this is set up in your DTO
+        Users registeredUser = registrationFormService.registerUser(email, isdCode, phoneNumber);
 
-
-    @PostMapping("/verify-email")
-    public ResponseEntity<ApiResponse<String>> verifyEmail(@RequestParam String email, @RequestParam String otp) {
-        boolean isVerified = userService.verifyEmailOtp(email, otp);
-        if (isVerified) {
-            return ResponseEntity.ok(ApiResponse.success(null, "Email verified successfully"));
-        } else {
-            return ResponseEntity.badRequest().body(ApiResponse.error(HttpStatus.SC_BAD_REQUEST, "Invalid OTP", "Verification failed: Incorrect OTP"));
-        }
-    }
-
-    @PostMapping("/verify-phone")
-    public ResponseEntity<ApiResponse<String>> verifyPhone(@RequestParam String phoneNumber, @RequestParam String otp) {
-        boolean isVerified = userService.verifyPhoneOtp(phoneNumber, otp);
-        if (isVerified) {
-            return ResponseEntity.ok(ApiResponse.success(null, "Phone number verified successfully"));
-        } else {
-            return ResponseEntity.badRequest().body(ApiResponse.error(HttpStatus.SC_BAD_REQUEST, "Invalid OTP", "Verification failed: Incorrect OTP"));
-        }
-    }
-
-    @PostMapping("/send-login-otp")
-    public ResponseEntity<ApiResponse<String>> sendLoginOtp(@RequestParam String identifier) throws Exception {
-        userService.sendLoginOtp(identifier);
-        return ResponseEntity.ok(ApiResponse.success(null, "OTP sent to " + identifier));
+        return ResponseEntity.ok(("User registered successfully: " + registeredUser.getUsername()));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<String>> loginWithOtp(@RequestParam String identifier, @RequestParam String otp) throws Exception {
-        String jwtToken = userService.loginWithOtp(identifier, otp);
-        return ResponseEntity.ok(ApiResponse.success(jwtToken, "Login successful. JWT Token generated"));
-    }
-
-    @PostMapping("/login-with-username-password")
-    public ResponseEntity<ApiResponse<String>> login(@RequestBody Users user) {
-        String jwtToken = userService.verify(user);
-        if ("Failed".equals(jwtToken)) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(HttpStatus.SC_BAD_REQUEST, "Login failed", "Invalid credentials"));
+    public ResponseEntity<String> generateOtp(@RequestBody LoginRequestDto requestDto) {
+        try {
+            loginService.generateAndSendOtp(requestDto);
+            return ResponseEntity.ok("OTP sent successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        return ResponseEntity.ok(ApiResponse.success(jwtToken, "Login successful. JWT Token generated"));
     }
 
-    @GetMapping("/all-users")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<ApiResponse<List<UsersResponseDTO>>> getAllUsers() {
-        List<UsersResponseDTO> users = userService.getAllUsers();
-        return ResponseEntity.ok(ApiResponse.success(users, "List of all users"));
+    @PostMapping("/verify-otp")
+    public ResponseEntity<OtpVerificationResponseDto> verifyOtp(@RequestBody OtpVerificationRequestDto requestDto) {
+        System.out.println("Received OTP verification request: " + requestDto);
+        OtpVerificationResponseDto responseDto = loginService.verifyOtp(requestDto);
+        if (responseDto.isSuccess()) {
+            return ResponseEntity.ok(responseDto);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseDto);
+        }
     }
-}
+
+
+    @PostMapping("/login-with-pass")
+    public ResponseEntity<Map<String, String>> loginUser(@RequestBody LoginRequestDtoWithPass loginRequestDto) {
+        try {
+            // Extract username and password from the DTO
+            String username = loginRequestDto.getUsername();
+            String password = loginRequestDto.getPassword();
+
+            // Validate user credentials
+            boolean isValidUser = loginService.validateUserCredentials(username, password);
+
+            if (isValidUser) {
+                // Generate JWT Token for the user
+                String jwtToken = jwtService.generateToken(username);
+
+                // Prepare response with the token
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Login successful!");
+                response.put("token", jwtToken);
+
+                return ResponseEntity.ok(response);
+            } else {
+                // Return error response if credentials are invalid
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid username or password"));
+            }
+        } catch (Exception e) {
+            // Return a generic error response if any other exception occurs
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "An error occurred during login"));
+        }
+
+}}
 
