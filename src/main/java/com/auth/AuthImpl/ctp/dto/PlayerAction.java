@@ -2,10 +2,12 @@ package com.auth.AuthImpl.ctp.dto;
 
 import com.auth.AuthImpl.ctp.enums.PlayerActionType;
 
+import java.math.BigDecimal;
+
 public class PlayerAction {
     private Long playerId;
     private PlayerActionType action;
-    private int betAmount;
+    private BigDecimal betAmount;
     private Long gameId;
     private boolean isBlind; // Flag to indicate if the player is betting blind
 
@@ -14,7 +16,7 @@ public class PlayerAction {
     }
 
     // Constructor with parameters for convenience
-    public PlayerAction(Long playerId, PlayerActionType action, int betAmount, Long gameId, boolean isBlind) {
+    public PlayerAction(Long playerId, PlayerActionType action, BigDecimal betAmount, Long gameId, boolean isBlind) {
         this.playerId = playerId;
         this.action = action;
         this.betAmount = betAmount;
@@ -38,11 +40,11 @@ public class PlayerAction {
         this.action = action;
     }
 
-    public int getBetAmount() {
+    public BigDecimal getBetAmount() {
         return betAmount;
     }
 
-    public void setBetAmount(int betAmount) {
+    public void setBetAmount(BigDecimal betAmount) {
         this.betAmount = betAmount;
     }
 

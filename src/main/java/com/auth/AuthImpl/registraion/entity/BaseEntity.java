@@ -6,26 +6,26 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @MappedSuperclass
-public abstract class BaseEntity {
+public abstract class BaseEntity {  //entityLis
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    private Status status = Status.LIVE;
+    protected Status status = Status.LIVE;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    protected LocalDateTime createdAt;
 
     @Column(name = "created_by", nullable = false)
-    private String createdBy;
+    protected String createdBy;
 
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(name = "updated_at")
+    protected LocalDateTime updatedAt;
 
     @Column(name = "updated_by")
-    private String updatedBy;
+    protected String updatedBy;
 
     // Constructors
     public BaseEntity() {

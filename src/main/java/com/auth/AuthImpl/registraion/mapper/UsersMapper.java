@@ -1,63 +1,54 @@
-//package com.auth.AuthImpl.registraion.mapper;
-//
-//import com.auth.AuthImpl.registraion.dto.UsersRequestDTO;
-//import com.auth.AuthImpl.registraion.dto.UsersResponseDTO;
-//import com.auth.AuthImpl.registraion.entity.Role;
-//import com.auth.AuthImpl.registraion.entity.Users;
-//import org.springframework.stereotype.Component;
-//
-//import java.util.Set;
-//import java.util.stream.Collectors;
-//
-//@Component
-//public class UsersMapper {
-//
-//    public static UsersResponseDTO entityToResponseDto(Users user) {
-//        if (user == null) {
-//            return null;
-//        }
-//
-//        UsersResponseDTO dto = new UsersResponseDTO();
-//        dto.setId(user.getId());
-//        dto.setUsername(user.getUsername());
-//        dto.setEmail(user.getEmail());
-//        dto.setPhoneNumber(user.getPhoneNumber());
-//        dto.setEmailVerified(user.isEmailVerified());
-//        dto.setPhoneNumberVerified(user.isPhoneNumberVerified());
-//        dto.setRoles(user.getRoles().stream()
-//                .map(Role::getRoleName)
-//                .collect(Collectors.toSet()));
-//        dto.setCountry(user.getCountry());
-//        dto.setCreatedAt(user.getCreatedAt());
-//        dto.setUpdatedAt(user.getUpdatedAt());
-//
-//        return dto;
-//    }
-//
-//    public static Users requestDtoToEntity(UsersRequestDTO dto) {
-//        if (dto == null) {
-//            return null;
-//        }
-//
-//        Users user = new Users();
-//        user.setUsername(dto.getUsername());
-//        user.setPassword(dto.getPassword());
-//        user.setEmail(dto.getEmail());
-//        user.setPhoneNumber(dto.getPhoneNumber());
-//        user.setEmailVerified(dto.isEmailVerified());
-//        user.setPhoneNumberVerified(dto.isPhoneNumberVerified());
-//
-//        Set<Role> roles = dto.getRoles().stream()
-//                .map(roleName -> {
-//                    Role role = new Role();
-//                    role.setRoleName(roleName);
-//                    return role;
-//                })
-//                .collect(Collectors.toSet());
-//        user.setRoles(roles);
-//
-//        user.setCountry(dto.getCountry());
-//
-//        return user;
-//    }
-//}
+package com.auth.AuthImpl.registraion.mapper;
+import com.auth.AuthImpl.registraion.dto.UsersResponseDTO;
+import com.auth.AuthImpl.registraion.dtos.request.UserRequestDto;
+import com.auth.AuthImpl.registraion.entity.Users;
+
+public class UsersMapper {
+
+
+    public static Users dtoToEntity(UserRequestDto userRequestDto) {
+        if (userRequestDto == null) {
+            throw new IllegalArgumentException("UserRequestDto cannot be null");
+        }
+
+        Users user = new Users();
+        user.setId(userRequestDto.getId());
+        user.setUsername(getUsernameFromRequest(userRequestDto,user.getId()));
+        user.setEmail(userRequestDto.getEmail());
+        user.setIsdCode(userRequestDto.getIsdCode());
+        user.setPhoneNumber(userRequestDto.getPhoneNumber());
+        return user;
+    }
+
+
+
+    private static String getUsernameFromRequest(UserRequestDto userRequestDto, Long userId) {
+        if (userRequestDto.getPhoneNumber() != null && !userRequestDto.getPhoneNumber().isEmpty()) {
+            return "user" + userId; // Generate username based on userId
+        } else if (userRequestDto.getEmail() != null && !userRequestDto.getEmail().isEmpty()) {
+            return userRequestDto.getEmail().substring(0, userRequestDto.getEmail().indexOf("@")); // Extract part before '@'
+        }
+        throw new IllegalArgumentException("Either phone number or email must be provided.");
+    }
+
+
+    public static UsersResponseDTO mapToDTO(Users user, String message) {
+        if (user == null) {
+            throw new IllegalArgumentException("Users entity cannot be null");
+        }
+
+        UsersResponseDTO responseDTO = new UsersResponseDTO(user,message);
+        return responseDTO;
+    }
+
+    public static UsersResponseDTO mapToUserRequestDto(UserRequestDto user) {
+        if (user == null) {
+            throw new IllegalArgumentException("Users entity cannot be null");
+        }
+
+        UsersResponseDTO responseDTO = new UsersResponseDTO(user);
+        return responseDTO;
+    }
+
+
+}

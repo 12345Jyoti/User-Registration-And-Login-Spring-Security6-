@@ -1,14 +1,22 @@
 package com.auth.AuthImpl.registraion.dtos;
 
-public class Email extends AbstractField<String> {
-    private String emailAddress;
+import com.auth.AuthImpl.registraion.dtos.fields.EmailField;
 
-    // Getters and Setters
-    public String getEmailAddress() {
-        return emailAddress;
+public class Email {
+    private EmailField emailField;
+
+    public EmailField getEmailField() {
+        return emailField;
     }
 
-    public void setEmailAddress(String emailAddress) {
-        this.emailAddress = emailAddress;
+    public void setEmailField(EmailField emailField) {
+        this.emailField = emailField;
+    }
+
+    public Email() {
+    }
+
+    public Email(EmailField emailField) {
+        this.emailField = emailField;
     }
 }

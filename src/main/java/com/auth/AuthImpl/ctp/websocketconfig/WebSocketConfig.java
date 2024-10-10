@@ -96,8 +96,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-game")
-                .setAllowedOrigins("http://localhost:8081") // Adjust if necessary
+        registry.addEndpoint("/join-game")
+                .setAllowedOrigins("/**") // Adjust if necessary
 //                .addInterceptors(new HandshakeInterceptor() {
 //                    @Override
 //                    public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,

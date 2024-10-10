@@ -1,4 +1,4 @@
-package com.auth.AuthImpl.registraion.dtos;
+package com.auth.AuthImpl.registraion.dtos.fields;
 
 public abstract class AbstractField<T> {
     private String inputType;

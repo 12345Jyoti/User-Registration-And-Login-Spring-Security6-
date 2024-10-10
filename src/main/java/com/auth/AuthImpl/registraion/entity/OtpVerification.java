@@ -1,6 +1,7 @@
 package com.auth.AuthImpl.registraion.entity;
 
 import com.auth.AuthImpl.registraion.enums.OtpType;
+import com.auth.AuthImpl.registraion.enums.Status;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -11,6 +12,7 @@ public class OtpVerification extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "user_id") // Foreign key column
     private Users user;
+
     @Column(nullable = false)
     private String otp;
 
@@ -22,6 +24,13 @@ public class OtpVerification extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private OtpType type;
+
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.PENDING;
+
+    // New field to track OTP attempts
+    @Column(nullable = false)
+    private int attempts = 0;
 
     // Getters and Setters
     public Users getUser() {
@@ -62,5 +71,21 @@ public class OtpVerification extends BaseEntity {
 
     public void setType(OtpType type) {
         this.type = type;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public int getAttempts() {
+        return attempts;
+    }
+
+    public void setAttempts(int attempts) {
+        this.attempts = attempts;
     }
 }

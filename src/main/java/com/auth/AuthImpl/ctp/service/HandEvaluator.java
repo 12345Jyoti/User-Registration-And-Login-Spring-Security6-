@@ -83,10 +83,28 @@ public class HandEvaluator {
         }
 
         for (Card card : hand) {
-            ranks.add(rankValueMap.get(card.getRank()));
+            if (card == null || card.getRank() == null) {
+                throw new IllegalArgumentException("Card or card rank cannot be null. Card: " + card);
+            }
+
+            // Clean the rank string to remove unwanted characters
+            String rank = cleanRank(card.getRank());
+
+            // Log the cleaned rank value before attempting to get it from the map
+            System.out.println("Processing card with cleaned rank: " + rank);
+
+            Integer rankValue = rankValueMap.get(rank);
+
+            if (rankValue == null) {
+                // Log the invalid rank before throwing the exception
+                System.err.println("Invalid rank encountered: " + rank);
+                throw new IllegalArgumentException("Invalid rank: " + rank);
+            }
+
+            ranks.add(rankValue);
         }
 
-        Collections.sort(ranks);
+        Collections.sort(ranks);  // Sorting now safe because we checked for null
 
         // Check for consecutive ranks
         for (int i = 1; i < ranks.size(); i++) {
@@ -96,4 +114,12 @@ public class HandEvaluator {
         }
         return true;
     }
+
+    // Helper function to clean the rank string
+    private static String cleanRank(String rank) {
+        // Remove unwanted characters and return a trimmed version of the rank
+        return rank.replaceAll("[\\[\\]\"]", "").trim();
+    }
+
+
 }

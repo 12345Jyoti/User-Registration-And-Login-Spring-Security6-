@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "otpTracking")
-public class OtpTracking extends BaseEntity {
+@Table(name = "sms_tracking")
+public class SmsTracking extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)

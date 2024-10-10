@@ -25,8 +25,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        //"/api/auth-user/**
         http.csrf(csrf -> csrf.disable()) // Disable CSRF for stateless APIs
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth-user/**").permitAll() // Allow unauthenticated access to user endpoints
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/**").permitAll()
                         .anyRequest().authenticated()) // All other requests require authentication
                 .httpBasic(Customizer.withDefaults()) // Use this for basic auth
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless session management
